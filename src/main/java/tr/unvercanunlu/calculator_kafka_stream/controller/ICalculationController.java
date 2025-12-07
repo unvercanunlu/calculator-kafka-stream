@@ -13,13 +13,13 @@ import java.util.UUID;
 @Validated
 public interface ICalculationController {
 
-    ResponseEntity<List<Calculation>> getAll();
+  ResponseEntity<List<Calculation>> getAll();
 
-    ResponseEntity<Calculation> get(@NotNull(message = "Id should not be null.") UUID id);
+  ResponseEntity<Calculation> get(@NotNull(message = "Id should not be null.") UUID id);
 
-    ResponseEntity<Void> create(
-            @NotNull(message = "Calculation request should not be null.")
-            @Valid
-            CalculationRequest request);
+  ResponseEntity<Void> create(
+      @NotNull(message = "Calculation request should not be null.")
+      @Valid
+      CalculationRequest request);
 
 }

@@ -18,46 +18,46 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KafkaResultConsumer implements IKafkaConsumer<String, Double> {
 
-    private final Logger logger = LoggerFactory.getLogger(KafkaResultConsumer.class);
+  private final Logger logger = LoggerFactory.getLogger(KafkaResultConsumer.class);
 
-    private final ICalculationRepository calculationRepository;
+  private final ICalculationRepository calculationRepository;
 
-    @Value(value = "${spring.kafka.topic.result}")
-    private String resultTopic;
+  @Value(value = "${spring.kafka.topic.result}")
+  private String resultTopic;
 
-    @Override
-    @KafkaListener(topics = "${spring.kafka.topic.result}", containerFactory = "resultListenerFactory", groupId = "${spring.kafka.group-id}")
-    public void receive(ConsumerRecord<String, Double> payload) {
-        this.logger.info("Kafka Result Consumer is started.");
+  @Override
+  @KafkaListener(topics = "${spring.kafka.topic.result}", containerFactory = "resultListenerFactory", groupId = "${spring.kafka.group-id}")
+  public void receive(ConsumerRecord<String, Double> payload) {
+    this.logger.info("Kafka Result Consumer is started.");
 
-        this.logger.info("Kafka Result Consumer consumed a new record from '" + this.resultTopic + "' Kafka Topic.");
+    this.logger.info("Kafka Result Consumer consumed a new record from '" + this.resultTopic + "' Kafka Topic.");
 
-        String key = payload.key();
-        Double value = payload.value();
+    String key = payload.key();
+    Double value = payload.value();
 
-        this.logger.debug("Consumed record key: '" + key + "'.");
-        this.logger.debug("Consumed record value: " + value);
+    this.logger.debug("Consumed record key: '" + key + "'.");
+    this.logger.debug("Consumed record value: " + value);
 
-        UUID calculationId = UUID.fromString(key);
+    UUID calculationId = UUID.fromString(key);
 
-        Optional<Calculation> optionalCalculation = this.calculationRepository.findById(calculationId);
+    Optional<Calculation> optionalCalculation = this.calculationRepository.findById(calculationId);
 
-        Calculation calculation = optionalCalculation.get();
+    Calculation calculation = optionalCalculation.get();
 
-        this.logger.debug("Fetched calculation: " + calculation);
+    this.logger.debug("Fetched calculation: " + calculation);
 
-        calculation.setResult(value);
+    calculation.setResult(value);
 
-        this.logger.info("Calculation with '" + calculationId + "' id is updated.");
+    this.logger.info("Calculation with '" + calculationId + "' id is updated.");
 
-        this.logger.debug("Updated calculation: " + calculation);
+    this.logger.debug("Updated calculation: " + calculation);
 
-        calculation = this.calculationRepository.save(calculation);
+    calculation = this.calculationRepository.save(calculation);
 
-        this.logger.info("Calculation with '" + calculationId + "' id is saved to database.");
+    this.logger.info("Calculation with '" + calculationId + "' id is saved to database.");
 
-        this.logger.debug("Saved calculation: " + calculation);
+    this.logger.debug("Saved calculation: " + calculation);
 
-        this.logger.info("Kafka Result Consumer is end.");
-    }
+    this.logger.info("Kafka Result Consumer is end.");
+  }
 }

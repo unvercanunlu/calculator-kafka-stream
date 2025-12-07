@@ -24,81 +24,81 @@ import java.util.UUID;
 @RequestMapping(path = ApiConfig.CALCULATION_API)
 public class CalculationController implements ICalculationController {
 
-    private final Logger logger = LoggerFactory.getLogger(CalculationController.class);
+  private final Logger logger = LoggerFactory.getLogger(CalculationController.class);
 
-    private final ICalculationRepository calculationRepository;
+  private final ICalculationRepository calculationRepository;
 
-    private final IKafkaProducer<UUID, Calculation> calculationKafkaProducer;
+  private final IKafkaProducer<UUID, Calculation> calculationKafkaProducer;
 
-    @Override
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<Calculation>> getAll() {
-        this.logger.info("Get all calculations request is received.");
+  @Override
+  @RequestMapping(method = RequestMethod.GET)
+  public ResponseEntity<List<Calculation>> getAll() {
+    this.logger.info("Get all calculations request is received.");
 
-        List<Calculation> calculations = this.calculationRepository.findAll();
+    List<Calculation> calculations = this.calculationRepository.findAll();
 
-        this.logger.debug("All calculations: " + calculations);
+    this.logger.debug("All calculations: " + calculations);
 
-        this.logger.info("All calculations are fetched from the database.");
+    this.logger.info("All calculations are fetched from the database.");
 
-        return ResponseEntity.status(HttpStatus.OK.value())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(calculations);
+    return ResponseEntity.status(HttpStatus.OK.value())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(calculations);
+  }
+
+  @Override
+  @RequestMapping(path = "/{id}", method = RequestMethod.GET)
+  public ResponseEntity<Calculation> get(@PathVariable(name = "id") UUID id) {
+    this.logger.info("Get calculation with '" + id + "' id request is received.");
+
+    Optional<Calculation> optionalCalculation = this.calculationRepository.findById(id);
+
+    if (optionalCalculation.isEmpty()) {
+      this.logger.info("Calculation with '" + id + "' id is not found in the database.");
+
+      throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
     }
 
-    @Override
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Calculation> get(@PathVariable(name = "id") UUID id) {
-        this.logger.info("Get calculation with '" + id + "' id request is received.");
+    this.logger.info("Calculation with '" + id + "' id is fetched from the database.");
 
-        Optional<Calculation> optionalCalculation = this.calculationRepository.findById(id);
+    Calculation calculation = optionalCalculation.get();
 
-        if (optionalCalculation.isEmpty()) {
-            this.logger.info("Calculation with '" + id + "' id is not found in the database.");
+    this.logger.debug("Fetched calculation: " + calculation);
 
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-        }
+    return ResponseEntity.status(HttpStatus.OK.value())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(calculation);
+  }
 
-        this.logger.info("Calculation with '" + id + "' id is fetched from the database.");
+  @Override
+  @RequestMapping(method = RequestMethod.POST)
+  public ResponseEntity<Void> create(@RequestBody CalculationRequest request) {
+    this.logger.info("Create calculation request is received.");
 
-        Calculation calculation = optionalCalculation.get();
+    this.logger.debug("Calculation request: " + request);
 
-        this.logger.debug("Fetched calculation: " + calculation);
+    Calculation calculation = Calculation.builder()
+        .first(request.getFirst())
+        .second(request.getSecond())
+        .operationCode(request.getOperationCode())
+        .build();
 
-        return ResponseEntity.status(HttpStatus.OK.value())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(calculation);
-    }
+    this.logger.info("Calculation is created.");
 
-    @Override
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@RequestBody CalculationRequest request) {
-        this.logger.info("Create calculation request is received.");
+    this.logger.debug("Created calculation: " + calculation);
 
-        this.logger.debug("Calculation request: " + request);
+    calculation = this.calculationRepository.save(calculation);
 
-        Calculation calculation = Calculation.builder()
-                .first(request.getFirst())
-                .second(request.getSecond())
-                .operationCode(request.getOperationCode())
-                .build();
+    this.logger.info("Calculation is saved to database.");
 
-        this.logger.info("Calculation is created.");
+    this.logger.debug("Saved calculation: " + calculation);
 
-        this.logger.debug("Created calculation: " + calculation);
+    this.calculationKafkaProducer.send(calculation.getId(), calculation);
 
-        calculation = this.calculationRepository.save(calculation);
+    this.logger.info("Sending Calculation to Kafka Topic using Kafka Calculation Producer is done.");
 
-        this.logger.info("Calculation is saved to database.");
-
-        this.logger.debug("Saved calculation: " + calculation);
-
-        this.calculationKafkaProducer.send(calculation.getId(), calculation);
-
-        this.logger.info("Sending Calculation to Kafka Topic using Kafka Calculation Producer is done.");
-
-        return ResponseEntity.status(HttpStatus.OK.value())
-                .contentType(MediaType.APPLICATION_JSON)
-                .build();
-    }
+    return ResponseEntity.status(HttpStatus.OK.value())
+        .contentType(MediaType.APPLICATION_JSON)
+        .build();
+  }
 }

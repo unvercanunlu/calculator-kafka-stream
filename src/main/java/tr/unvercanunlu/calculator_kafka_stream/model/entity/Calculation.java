@@ -16,21 +16,21 @@ import java.util.UUID;
 @Table(name = "calculation")
 public class Calculation implements Serializable {
 
-    @Id
-    @GeneratedValue
-    @Column(name = "id", updatable = false, nullable = false, unique = true)
-    private UUID id;
+  @Id
+  @GeneratedValue
+  @Column(name = "id", updatable = false, nullable = false, unique = true)
+  private UUID id;
 
-    @Column(name = "first", nullable = false)
-    private Integer first;
+  @Column(name = "first", nullable = false)
+  private Integer first;
 
-    @Column(name = "second", nullable = false)
-    private Integer second;
+  @Column(name = "second", nullable = false)
+  private Integer second;
 
-    @Column(name = "operation_code", nullable = false)
-    private Integer operationCode;
+  @Column(name = "operation_code", nullable = false)
+  private Integer operationCode;
 
-    @Column(name = "result")
-    private Double result;
+  @Column(name = "result")
+  private Double result;
 
 }

@@ -17,46 +17,46 @@ import java.util.Map;
 @Configuration
 public class KafkaConsumerConfig {
 
-    @Value(value = "${spring.kafka.bootstrap-servers}")
-    private String bootstrapServer;
+  @Value(value = "${spring.kafka.bootstrap-servers}")
+  private String bootstrapServer;
 
-    @Value(value = "${spring.kafka.group-id}")
-    private String groupId;
+  @Value(value = "${spring.kafka.group-id}")
+  private String groupId;
 
-    public Map<String, Object> jsonConsumerConfigMap() {
-        Map<String, Object> configMap = new HashMap<>();
+  public Map<String, Object> jsonConsumerConfigMap() {
+    Map<String, Object> configMap = new HashMap<>();
 
-        configMap.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
-        configMap.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
-        configMap.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configMap.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        configMap.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        configMap.put(JsonDeserializer.TRUSTED_PACKAGES, "tr.unvercanunlu.calculator_kafka_stream.kafka.message, tr.unvercanunlu.calculator_kafka_stream.model.entity");
+    configMap.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
+    configMap.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
+    configMap.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    configMap.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+    configMap.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    configMap.put(JsonDeserializer.TRUSTED_PACKAGES, "tr.unvercanunlu.calculator_kafka_stream.kafka.message, tr.unvercanunlu.calculator_kafka_stream.model.entity");
 
-        return configMap;
-    }
+    return configMap;
+  }
 
-    public Map<String, Object> resultConsumerConfigMap() {
-        Map<String, Object> configMap = new HashMap<>();
+  public Map<String, Object> resultConsumerConfigMap() {
+    Map<String, Object> configMap = new HashMap<>();
 
-        configMap.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
-        configMap.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
-        configMap.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configMap.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DoubleDeserializer.class);
-        configMap.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    configMap.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
+    configMap.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
+    configMap.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    configMap.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DoubleDeserializer.class);
+    configMap.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        return configMap;
-    }
+    return configMap;
+  }
 
-    @Bean
-    public ConsumerFactory<String, Double> resultConsumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(this.resultConsumerConfigMap());
-    }
+  @Bean
+  public ConsumerFactory<String, Double> resultConsumerFactory() {
+    return new DefaultKafkaConsumerFactory<>(this.resultConsumerConfigMap());
+  }
 
-    @Bean(name = "resultListenerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Double> resultListenerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Double> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(this.resultConsumerFactory());
-        return factory;
-    }
+  @Bean(name = "resultListenerFactory")
+  public ConcurrentKafkaListenerContainerFactory<String, Double> resultListenerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, Double> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setConsumerFactory(this.resultConsumerFactory());
+    return factory;
+  }
 }

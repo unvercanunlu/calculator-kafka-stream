@@ -18,27 +18,27 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfig {
 
-    @Value(value = "${spring.kafka.bootstrap-servers}")
-    private String bootstrapServer;
+  @Value(value = "${spring.kafka.bootstrap-servers}")
+  private String bootstrapServer;
 
-    public Map<String, Object> jsonProducerConfigMap() {
-        Map<String, Object> configMap = new HashMap<>();
+  public Map<String, Object> jsonProducerConfigMap() {
+    Map<String, Object> configMap = new HashMap<>();
 
-        configMap.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
-        configMap.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configMap.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        configMap.put(JsonDeserializer.TRUSTED_PACKAGES, "tr.unvercanunlu.calculator_kafka_stream.kafka.message, tr.unvercanunlu.calculator_kafka_stream.model.entity");
+    configMap.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServer);
+    configMap.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    configMap.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    configMap.put(JsonDeserializer.TRUSTED_PACKAGES, "tr.unvercanunlu.calculator_kafka_stream.kafka.message, tr.unvercanunlu.calculator_kafka_stream.model.entity");
 
-        return configMap;
-    }
+    return configMap;
+  }
 
-    @Bean
-    public ProducerFactory<String, CalculationMessage> calculationMessageProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(this.jsonProducerConfigMap());
-    }
+  @Bean
+  public ProducerFactory<String, CalculationMessage> calculationMessageProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(this.jsonProducerConfigMap());
+  }
 
-    @Bean
-    public KafkaTemplate<String, CalculationMessage> calculationMessageKafkaTemplate() {
-        return new KafkaTemplate<>(this.calculationMessageProducerFactory());
-    }
+  @Bean
+  public KafkaTemplate<String, CalculationMessage> calculationMessageKafkaTemplate() {
+    return new KafkaTemplate<>(this.calculationMessageProducerFactory());
+  }
 }

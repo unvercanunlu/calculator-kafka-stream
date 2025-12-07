@@ -12,10 +12,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class CalculationMessage implements Serializable {
 
-    private Integer first;
+  private Integer first;
 
-    private Integer second;
+  private Integer second;
 
-    private Integer operationCode;
+  private Integer operationCode;
 
 }

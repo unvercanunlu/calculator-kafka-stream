@@ -21,70 +21,70 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class KafkaResultStreamProcessor {
 
-    private final Logger logger = LoggerFactory.getLogger(KafkaResultStreamProcessor.class);
+  private final Logger logger = LoggerFactory.getLogger(KafkaResultStreamProcessor.class);
 
-    private final JsonSerde<CalculationMessage> calculationMessageSerde;
+  private final JsonSerde<CalculationMessage> calculationMessageSerde;
 
-    @Value(value = "${spring.kafka.topic.valid-calculation}")
-    private String validCalculationTopic;
+  @Value(value = "${spring.kafka.topic.valid-calculation}")
+  private String validCalculationTopic;
 
-    @Value(value = "${spring.kafka.topic.result}")
-    private String resultTopic;
+  @Value(value = "${spring.kafka.topic.result}")
+  private String resultTopic;
 
-    @Bean
-    public KStream<String, Double> calculate(StreamsBuilder streamsBuilder) {
-        KStream<String, CalculationMessage> calculationMessageStream = streamsBuilder
-                .stream(this.validCalculationTopic, Consumed.with(Serdes.String(), this.calculationMessageSerde))
-                .peek((key, value) -> {
-                    this.logger.debug("Record from '" + this.validCalculationTopic + "' Kafka Topic is consumed.");
-                    this.logger.debug("Consumed record key: '" + key + "'.");
-                    this.logger.debug("Consumed record value: " + value);
-                });
+  @Bean
+  public KStream<String, Double> calculate(StreamsBuilder streamsBuilder) {
+    KStream<String, CalculationMessage> calculationMessageStream = streamsBuilder
+        .stream(this.validCalculationTopic, Consumed.with(Serdes.String(), this.calculationMessageSerde))
+        .peek((key, value) -> {
+          this.logger.debug("Record from '" + this.validCalculationTopic + "' Kafka Topic is consumed.");
+          this.logger.debug("Consumed record key: '" + key + "'.");
+          this.logger.debug("Consumed record value: " + value);
+        });
 
-        this.logger.info("Consuming records from '" + this.validCalculationTopic + "' Kafka Topic is done.");
+    this.logger.info("Consuming records from '" + this.validCalculationTopic + "' Kafka Topic is done.");
 
-        KTable<String, CalculationMessage> calculationMessageTable = calculationMessageStream.toTable();
+    KTable<String, CalculationMessage> calculationMessageTable = calculationMessageStream.toTable();
 
-        this.logger.info("Calculation Message Kafka Stream is converted to Calculation Message Kafka Table.");
+    this.logger.info("Calculation Message Kafka Stream is converted to Calculation Message Kafka Table.");
 
-        KTable<String, Double> resultTable = calculationMessageTable
-                .mapValues(((key, value) -> {
-                    Double result = switch (value.getOperationCode()) {
-                        case 0 -> (double) value.getFirst() + (double) value.getSecond();
-                        case 1 -> (double) value.getFirst() - (double) value.getSecond();
-                        case 2 -> (double) value.getFirst() * (double) value.getSecond();
-                        case 3 -> (double) value.getFirst() / (double) value.getSecond();
-                        case 4 -> (double) value.getFirst() % (double) value.getSecond();
-                        case 5 -> Math.pow(value.getFirst(), value.getSecond());
-                        case 6 -> ((double) value.getFirst() + (double) value.getSecond()) / 2;
-                        case 7 -> (double) Math.max(value.getFirst(), value.getSecond());
-                        case 8 -> (double) Math.min(value.getFirst(), value.getSecond());
-                        default -> null;
-                    };
+    KTable<String, Double> resultTable = calculationMessageTable
+        .mapValues(((key, value) -> {
+          Double result = switch (value.getOperationCode()) {
+            case 0 -> (double) value.getFirst() + (double) value.getSecond();
+            case 1 -> (double) value.getFirst() - (double) value.getSecond();
+            case 2 -> (double) value.getFirst() * (double) value.getSecond();
+            case 3 -> (double) value.getFirst() / (double) value.getSecond();
+            case 4 -> (double) value.getFirst() % (double) value.getSecond();
+            case 5 -> Math.pow(value.getFirst(), value.getSecond());
+            case 6 -> ((double) value.getFirst() + (double) value.getSecond()) / 2;
+            case 7 -> (double) Math.max(value.getFirst(), value.getSecond());
+            case 8 -> (double) Math.min(value.getFirst(), value.getSecond());
+            default -> null;
+          };
 
-                    this.logger.info("Calculation with '" + key + "' id is done.");
+          this.logger.info("Calculation with '" + key + "' id is done.");
 
-                    return result;
-                }));
+          return result;
+        }));
 
-        this.logger.info("Calculation Message Kafka Table is converted to Result Kafka Table.");
+    this.logger.info("Calculation Message Kafka Table is converted to Result Kafka Table.");
 
-        KStream<String, Double> resultStream = resultTable.toStream();
+    KStream<String, Double> resultStream = resultTable.toStream();
 
-        this.logger.info("Result Kafka Table is converted to Result Kafka Stream.");
+    this.logger.info("Result Kafka Table is converted to Result Kafka Stream.");
 
-        resultStream = resultStream.filter((key, value) ->
-                Objects.nonNull(value) && !value.isNaN()
-                        && !Objects.equals(value, Double.POSITIVE_INFINITY)
-                        && !Objects.equals(value, Double.NEGATIVE_INFINITY));
+    resultStream = resultStream.filter((key, value) ->
+        Objects.nonNull(value) && !value.isNaN()
+            && !Objects.equals(value, Double.POSITIVE_INFINITY)
+            && !Objects.equals(value, Double.NEGATIVE_INFINITY));
 
-        this.logger.info("Null, Not A Number, Infinity values are removed from Result Kafka Stream.");
+    this.logger.info("Null, Not A Number, Infinity values are removed from Result Kafka Stream.");
 
-        resultStream.peek((key, value) -> this.logger.debug("Record from Result Kafka Stream: (Key: '" + key + "' , Value: " + value + ")."))
-                .to(this.resultTopic, Produced.with(Serdes.String(), Serdes.Double()));
+    resultStream.peek((key, value) -> this.logger.debug("Record from Result Kafka Stream: (Key: '" + key + "' , Value: " + value + ")."))
+        .to(this.resultTopic, Produced.with(Serdes.String(), Serdes.Double()));
 
-        this.logger.info("Records from Result Kafka Stream are sent to '" + this.resultTopic + "' Kafka Topic.");
+    this.logger.info("Records from Result Kafka Stream are sent to '" + this.resultTopic + "' Kafka Topic.");
 
-        return resultStream;
-    }
+    return resultStream;
+  }
 }

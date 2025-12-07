@@ -24,47 +24,47 @@ import java.util.Optional;
 @RequestMapping(path = ApiConfig.OPERATION_API)
 public class OperationController implements IOperationController {
 
-    private final Logger logger = LoggerFactory.getLogger(OperationController.class);
+  private final Logger logger = LoggerFactory.getLogger(OperationController.class);
 
-    private final IOperationRepository operationRepository;
+  private final IOperationRepository operationRepository;
 
-    @Override
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<Operation>> getAll() {
-        this.logger.info("Get all operations request is received.");
+  @Override
+  @RequestMapping(method = RequestMethod.GET)
+  public ResponseEntity<List<Operation>> getAll() {
+    this.logger.info("Get all operations request is received.");
 
-        List<Operation> operations = this.operationRepository.findAll();
+    List<Operation> operations = this.operationRepository.findAll();
 
-        this.logger.debug("All operations: " + operations);
+    this.logger.debug("All operations: " + operations);
 
-        this.logger.info("All operations are fetched from the database.");
+    this.logger.info("All operations are fetched from the database.");
 
-        return ResponseEntity.status(HttpStatus.OK.value())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(operations);
+    return ResponseEntity.status(HttpStatus.OK.value())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(operations);
+  }
+
+  @Override
+  @RequestMapping(path = "/{code}", method = RequestMethod.GET)
+  public ResponseEntity<Operation> get(@PathVariable(name = "code") Integer code) {
+    this.logger.info("Get operation with '" + code + "' code request is received.");
+
+    Optional<Operation> optionalOperation = this.operationRepository.findById(code);
+
+    if (optionalOperation.isEmpty()) {
+      this.logger.info("Operation with '" + code + "' code is not found in the database.");
+
+      throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
     }
 
-    @Override
-    @RequestMapping(path = "/{code}", method = RequestMethod.GET)
-    public ResponseEntity<Operation> get(@PathVariable(name = "code") Integer code) {
-        this.logger.info("Get operation with '" + code + "' code request is received.");
+    this.logger.info("Operation with '" + code + "' code  is fetched from the database.");
 
-        Optional<Operation> optionalOperation = this.operationRepository.findById(code);
+    Operation operation = optionalOperation.get();
 
-        if (optionalOperation.isEmpty()) {
-            this.logger.info("Operation with '" + code + "' code is not found in the database.");
+    this.logger.debug("Fetched operation: " + operation);
 
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-        }
-
-        this.logger.info("Operation with '" + code + "' code  is fetched from the database.");
-
-        Operation operation = optionalOperation.get();
-
-        this.logger.debug("Fetched operation: " + operation);
-
-        return ResponseEntity.status(HttpStatus.OK.value())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(operation);
-    }
+    return ResponseEntity.status(HttpStatus.OK.value())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(operation);
+  }
 }

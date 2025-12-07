@@ -25,90 +25,90 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KafkaValidCalculationMessageStreamProcessor {
 
-    private final Logger logger = LoggerFactory.getLogger(KafkaValidCalculationMessageStreamProcessor.class);
+  private final Logger logger = LoggerFactory.getLogger(KafkaValidCalculationMessageStreamProcessor.class);
 
-    private final ICalculationRepository calculationRepository;
+  private final ICalculationRepository calculationRepository;
 
-    private final IOperationRepository operationRepository;
+  private final IOperationRepository operationRepository;
 
-    private final JsonSerde<CalculationMessage> calculationMessageSerde;
+  private final JsonSerde<CalculationMessage> calculationMessageSerde;
 
-    @Value(value = "${spring.kafka.topic.calculation}")
-    private String calculationTopic;
+  @Value(value = "${spring.kafka.topic.calculation}")
+  private String calculationTopic;
 
-    @Value(value = "${spring.kafka.topic.valid-calculation}")
-    private String validCalculationTopic;
+  @Value(value = "${spring.kafka.topic.valid-calculation}")
+  private String validCalculationTopic;
 
-    @Bean
-    public KStream<String, CalculationMessage> validate(StreamsBuilder streamsBuilder) {
-        KStream<String, CalculationMessage> calculationMessageStream = streamsBuilder
-                .stream(this.calculationTopic, Consumed.with(Serdes.String(), this.calculationMessageSerde))
-                .peek((key, value) -> {
-                    this.logger.debug("Record from '" + this.calculationTopic + "' Kafka Topic is consumed.");
-                    this.logger.debug("Consumed record key: '" + key + "'.");
-                    this.logger.debug("Consumed record value: " + value);
-                });
+  @Bean
+  public KStream<String, CalculationMessage> validate(StreamsBuilder streamsBuilder) {
+    KStream<String, CalculationMessage> calculationMessageStream = streamsBuilder
+        .stream(this.calculationTopic, Consumed.with(Serdes.String(), this.calculationMessageSerde))
+        .peek((key, value) -> {
+          this.logger.debug("Record from '" + this.calculationTopic + "' Kafka Topic is consumed.");
+          this.logger.debug("Consumed record key: '" + key + "'.");
+          this.logger.debug("Consumed record value: " + value);
+        });
 
-        this.logger.info("Consuming records from '" + this.calculationTopic + "' Kafka Topic is done.");
+    this.logger.info("Consuming records from '" + this.calculationTopic + "' Kafka Topic is done.");
 
-        KStream<String, CalculationMessage> validCalculationMessageStream = calculationMessageStream
-                .filter((key, value) -> {
-                    Optional<Operation> optionalOperation = this.operationRepository.findById(value.getOperationCode());
+    KStream<String, CalculationMessage> validCalculationMessageStream = calculationMessageStream
+        .filter((key, value) -> {
+          Optional<Operation> optionalOperation = this.operationRepository.findById(value.getOperationCode());
 
-                    if (optionalOperation.isEmpty()) {
-                        this.logger.info("Operation with '" + value.getOperationCode() + "' code is not found in the database.");
+          if (optionalOperation.isEmpty()) {
+            this.logger.info("Operation with '" + value.getOperationCode() + "' code is not found in the database.");
 
-                        return false;
-                    }
+            return false;
+          }
 
-                    Operation operation = optionalOperation.get();
+          Operation operation = optionalOperation.get();
 
-                    this.logger.debug("Fetched operation: " + operation);
+          this.logger.debug("Fetched operation: " + operation);
 
-                    this.logger.info("Operation with '" + value.getOperationCode() + "' code  is fetched from the database.");
+          this.logger.info("Operation with '" + value.getOperationCode() + "' code  is fetched from the database.");
 
-                    return true;
-                });
+          return true;
+        });
 
-        this.logger.info("Records from Calculation Message Kafka Stream are validated by operation from the database.");
+    this.logger.info("Records from Calculation Message Kafka Stream are validated by operation from the database.");
 
-        validCalculationMessageStream = validCalculationMessageStream
-                .filter(((key, value) -> {
-                    UUID calculationId = UUID.fromString(key);
+    validCalculationMessageStream = validCalculationMessageStream
+        .filter(((key, value) -> {
+          UUID calculationId = UUID.fromString(key);
 
-                    Optional<Calculation> optionalCalculation = this.calculationRepository.findById(calculationId);
+          Optional<Calculation> optionalCalculation = this.calculationRepository.findById(calculationId);
 
-                    if (optionalCalculation.isEmpty()) {
-                        this.logger.info("Calculation with '" + key + "' id is not found in the database.");
+          if (optionalCalculation.isEmpty()) {
+            this.logger.info("Calculation with '" + key + "' id is not found in the database.");
 
-                        return false;
-                    }
+            return false;
+          }
 
-                    Calculation calculation = optionalCalculation.get();
+          Calculation calculation = optionalCalculation.get();
 
-                    this.logger.debug("Fetched calculation: " + calculation);
+          this.logger.debug("Fetched calculation: " + calculation);
 
-                    this.logger.info("Calculation with '" + key + "' id is fetched from the database.");
+          this.logger.info("Calculation with '" + key + "' id is fetched from the database.");
 
-                    if (!value.getFirst().equals(calculation.getFirst())
-                            || !value.getSecond().equals(calculation.getSecond())
-                            || !value.getOperationCode().equals(calculation.getOperationCode())) {
+          if (!value.getFirst().equals(calculation.getFirst())
+              || !value.getSecond().equals(calculation.getSecond())
+              || !value.getOperationCode().equals(calculation.getOperationCode())) {
 
-                        this.logger.info("Calculation with '" + key + "' id is different from the message.");
+            this.logger.info("Calculation with '" + key + "' id is different from the message.");
 
-                        return false;
-                    }
+            return false;
+          }
 
-                    return true;
-                }));
+          return true;
+        }));
 
-        this.logger.info("Records from Calculation Message Kafka Stream are validated by calculation from the database.");
+    this.logger.info("Records from Calculation Message Kafka Stream are validated by calculation from the database.");
 
-        validCalculationMessageStream.peek((key, value) -> this.logger.debug("Record from Calculation Message Kafka Stream: (Key: '" + key + "' , Value: " + value + ")."))
-                .to(this.validCalculationTopic, Produced.with(Serdes.String(), this.calculationMessageSerde));
+    validCalculationMessageStream.peek((key, value) -> this.logger.debug("Record from Calculation Message Kafka Stream: (Key: '" + key + "' , Value: " + value + ")."))
+        .to(this.validCalculationTopic, Produced.with(Serdes.String(), this.calculationMessageSerde));
 
-        this.logger.info("Records from Valid Calculation Message Kafka Stream are sent to '" + this.validCalculationTopic + "' Kafka Topic.");
+    this.logger.info("Records from Valid Calculation Message Kafka Stream are sent to '" + this.validCalculationTopic + "' Kafka Topic.");
 
-        return validCalculationMessageStream;
-    }
+    return validCalculationMessageStream;
+  }
 }

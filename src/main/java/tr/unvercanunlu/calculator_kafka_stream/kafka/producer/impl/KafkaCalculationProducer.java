@@ -16,31 +16,31 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KafkaCalculationProducer implements IKafkaProducer<UUID, Calculation> {
 
-    private final Logger logger = LoggerFactory.getLogger(KafkaCalculationProducer.class);
+  private final Logger logger = LoggerFactory.getLogger(KafkaCalculationProducer.class);
 
-    private final KafkaTemplate<String, CalculationMessage> calculationMessageKafkaTemplate;
+  private final KafkaTemplate<String, CalculationMessage> calculationMessageKafkaTemplate;
 
-    @Value(value = "${spring.kafka.topic.calculation}")
-    private String calculationTopic;
+  @Value(value = "${spring.kafka.topic.calculation}")
+  private String calculationTopic;
 
-    @Override
-    public void send(UUID key, Calculation value) {
-        this.logger.info("Kafka Calculation Producer is started.");
+  @Override
+  public void send(UUID key, Calculation value) {
+    this.logger.info("Kafka Calculation Producer is started.");
 
-        CalculationMessage message = CalculationMessage.builder()
-                .first(value.getFirst())
-                .second(value.getSecond())
-                .operationCode(value.getOperationCode())
-                .build();
+    CalculationMessage message = CalculationMessage.builder()
+        .first(value.getFirst())
+        .second(value.getSecond())
+        .operationCode(value.getOperationCode())
+        .build();
 
-        this.logger.info("Calculation Message is created from Calculation.");
+    this.logger.info("Calculation Message is created from Calculation.");
 
-        this.logger.debug("Created Calculation Message: " + message);
+    this.logger.debug("Created Calculation Message: " + message);
 
-        this.calculationMessageKafkaTemplate.send(this.calculationTopic, key.toString(), message);
+    this.calculationMessageKafkaTemplate.send(this.calculationTopic, key.toString(), message);
 
-        this.logger.info("Kafka Calculation Producer sent Calculation Message with '" + key + "' key as a new record to '" + this.calculationTopic + "' Kafka Topic.");
+    this.logger.info("Kafka Calculation Producer sent Calculation Message with '" + key + "' key as a new record to '" + this.calculationTopic + "' Kafka Topic.");
 
-        this.logger.info("Kafka Calculation Producer is end.");
-    }
+    this.logger.info("Kafka Calculation Producer is end.");
+  }
 }

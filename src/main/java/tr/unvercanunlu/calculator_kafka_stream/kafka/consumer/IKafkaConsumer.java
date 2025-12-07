@@ -7,6 +7,6 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public interface IKafkaConsumer<K, V> {
 
-    void receive(@NotNull(message = "Payload should not be null.") ConsumerRecord<K, V> payload);
+  void receive(@NotNull(message = "Payload should not be null.") ConsumerRecord<K, V> payload);
 
 }
