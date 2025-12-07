@@ -11,15 +11,15 @@ import tr.unvercanunlu.calculator_kafka_stream.kafka.message.CalculationMessage;
 @RequiredArgsConstructor
 public class SerdeConfig {
 
-    private final KafkaProducerConfig kafkaProducerConfig;
+  private final KafkaProducerConfig kafkaProducerConfig;
 
-    private final KafkaConsumerConfig kafkaConsumerConfig;
+  private final KafkaConsumerConfig kafkaConsumerConfig;
 
-    @Bean
-    public JsonSerde<CalculationMessage> calculationMessageSerde(ObjectMapper mapper) {
-        JsonSerde<CalculationMessage> jsonSerde = new JsonSerde<>(CalculationMessage.class, mapper);
-        jsonSerde.deserializer().configure(this.kafkaConsumerConfig.jsonConsumerConfigMap(), false);
-        jsonSerde.serializer().configure(this.kafkaProducerConfig.jsonProducerConfigMap(), false);
-        return jsonSerde;
-    }
+  @Bean
+  public JsonSerde<CalculationMessage> calculationMessageSerde(ObjectMapper mapper) {
+    JsonSerde<CalculationMessage> jsonSerde = new JsonSerde<>(CalculationMessage.class, mapper);
+    jsonSerde.deserializer().configure(this.kafkaConsumerConfig.jsonConsumerConfigMap(), false);
+    jsonSerde.serializer().configure(this.kafkaProducerConfig.jsonProducerConfigMap(), false);
+    return jsonSerde;
+  }
 }
